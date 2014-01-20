@@ -31,12 +31,28 @@ html{
 			font-weight: bold;
 		}
 		a{
-			display: inline-block;
-			padding: 10px;
-			width: 100%;
-			overflow: hidden;
-			background: rgba(240,240,255,0.8);
-			border-radius:8px;		
+			color: #222;
+			text-decoration: underline;
+		}
+		display: inline-block;
+		padding: 10px;
+		width: 100%;
+		overflow: hidden;
+		background: rgba(240,240,255,0.8);
+		border-radius:8px;	
+		&:hover{
+			color: #555;
+			background: rgba(240,255,240,0.8);
+			text-decoration: none;
+		}
+		/* a{
+				
+		} */
+
+		.caption{
+			border-left: 2px solid #777;
+			margin-left: 20px;
+			padding: 5px;
 		}
 		img.social{
 			float: right;
@@ -51,13 +67,7 @@ html{
 			max-height: 150px;
 			margin:10px auto;
 		}
-		&:hover{
-			a{ 
-				color: #555;
-				background: rgba(240,255,240,0.8);
-				text-decoration: none;
-			}
-		}
+		
 		.highlight{
 			background-color: rgba(198, 236, 86, 0.4);
 		}

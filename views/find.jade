@@ -25,19 +25,27 @@ block maincontent
 	- if (typeof(messages) !== 'undefined')
 		.row
 			-for(var i in messages)
-					div.message.col-md-6
+				div.col-md-6
+					div.message
 						//a(href='/related/'+messages[i].hash, _target="_blank")
-						a(href=messages[i].link_url || '#', target="_blank")
-							img.emotion(src=messages[i].emotion, title=messages[i].ntusd)
-							img.social(src="/images/social/"+messages[i].source+".png")
-							h4 #{messages[i].caption}
-							div #{messages[i].description}
-							div #{messages[i].messagebuzz}
-							- if (messages[i].image)
-								img.img-thumbnail(src=messages[i].image, onerror='this.parentNode.removeChild(this)')
-							div #{messages[i].time}
-							//- a(href='/related/'+emoticons[i].hash, _target="_blank")
-							//- 	img(src=emoticons[i].url)
+						//a(href=messages[i].link_url || '#', target="_blank")
+						- if(messages[i].link_url)
+							h4 
+								a(href=messages[i].link_url) #{messages[i].link}
+
+						
+						img.social(src="/images/social/"+messages[i].source+".png")
+						-if(messages[i].caption)
+							div.caption #{messages[i].caption}
+
+						img.emotion(src=messages[i].emotion, title=messages[i].ntusd)
+						div.description #{messages[i].description}
+						div.text #{messages[i].messagebuzz}
+						- if (messages[i].image)
+							img.img-thumbnail(src=messages[i].image, onerror='this.parentNode.removeChild(this)')
+						div #{messages[i].time}
+						//- a(href='/related/'+emoticons[i].hash, _target="_blank")
+						//- 	img(src=emoticons[i].url)
 
 
 

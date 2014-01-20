@@ -3,7 +3,7 @@ const express 	= require('express');
 const path 		= require('path');
 const fs 		= require('node-fs');
 const md5 		= require('MD5');
-
+const csv 		= require('csv');
 
 try {
     const gc 		= require('gc');
@@ -16,9 +16,10 @@ const POSTAG 		= require('node-segment').POSTAG;
 const Segment 		= require('node-segment').Segment;
 const TfIdf 		= natural.TfIdf;
 
-
+const FP 			= require('./lib/fp')
 const Apriori 		= require('./lib/Apriori');
 const FPTree 		= require('./lib/fptree');
+
 
 const ntusd			= require('./lib/ntusd').new();
 
@@ -41,6 +42,7 @@ function NewsEvents(callback, basePath){
 
 	this.basePath 		= basePath || __dirname;
 
+	this.fp 			= new FP();
 	this.association 	= new Apriori();
 	this.tfidf 			= new TfIdf();
 
@@ -48,10 +50,39 @@ function NewsEvents(callback, basePath){
 
 	callback && callback.call(self);
 }
+NewsEvents.prototype.loadCSV  = function(callback){ 
+	var self = this;
+	csv().from(this.basePath + '/data/csv/1985公民聯盟.csv', {columns: true})//.on('data', console.log);
+	
+	.transform(function(row, index){
+	    return row;
+	})
+	.to.array(function(rows){
+		
+		_.each(rows, function(msg){
+			//var hash = md5([msg.object_id, msg.message, msg.description].join('\n'));
+
+			self.stream['csv_' + msg.object_id] = _.extend(msg, {
+				source: 'facebook', 
+				messagebuzz : msg.message,
+				caption : '', 
+				hash :  'csv_' + msg.object_id,
+				time :  msg.TWTime, 
+				link_url : msg.link, 
+				link: msg.description,
+			});
+		})
+		console.log(_.size(self.stream), 'loaded from csv');
+		callback && callback();
+	});
+
+}
 NewsEvents.prototype.loadJSON  = function(){ 
+
 	var self = this;
 	var path = this.basePath + '/data/social-searcher/';
 	var files = fs.readdirSync(path);
+
 	_.each(files, function(fn){
 		//var source = fn.match(/fb|tw|gp/ig)//.toString().replace('fb', 'Facebook').replace('gp', 'GooglePlus').replace('tw', 'Twitter');
 		try{
@@ -76,6 +107,16 @@ NewsEvents.prototype.loadJSON  = function(){
 
 	});
 }
+NewsEvents.prototype.removeEmpty  = function(){
+	var before = _.size(this.stream);
+	for(var i in this.stream){
+		if((this.stream.message + this.stream.description + this.stream.messagebuzz ).length < 10){
+			delete this.stream[i];
+		}
+	}
+	var after = _.size(this.stream);
+	console.log(' - trimmed empty messages', before, '->', after);
+}
 
 NewsEvents.prototype.decoupling  = function(attribute, fragments){ 
 	var self = this;
@@ -86,8 +127,10 @@ NewsEvents.prototype.decoupling  = function(attribute, fragments){
 	fragments = fragments || 4;
 	_.each(this.stream, function(message){
 
+		//if(!message[attribute]) return;
+
 		var exist = false;
-		if(message[attribute].length > 0) _.each(samples, function(pattern){
+		if(message[attribute] && message[attribute].length > 20) _.each(samples, function(pattern){
 			if(message[attribute].toString().indexOf(pattern) != -1){
 				exist = true
 				return false;
@@ -95,10 +138,13 @@ NewsEvents.prototype.decoupling  = function(attribute, fragments){
 		});
 		if(! exist ) streamClean[message.hash] = message;
 
-
-		var len = message[attribute].length;
-		if(message[attribute].length > 8) for(var i = 0; i<len; i += len/fragments){
-			samples.push(message[attribute].substr(i, i+len/fragments));
+		if( (!exist) && message[attribute] && message[attribute].length > fragments * 2){
+			var len = message[attribute].length;
+			var fragmentSamples = []
+			for(var i = 0; i<len; i += len/fragments){
+				fragmentSamples.push(message[attribute].substr(i, i+len/fragments));
+			}
+			samples.push(_.sample(fragmentSamples));
 		}
 
 	});
@@ -114,21 +160,31 @@ NewsEvents.prototype.build  = function(attribute, fragments){
 	
 }
 NewsEvents.prototype.startServer  = function(basePath){ 
-	this.loadJSON();
-	this.decoupling('description');
-	this.decoupling('messagebuzz');
-	this.decoupling('caption');
-
-	//return;
-	this.preprocess();
-	this.startWebConsole(basePath);
+	var self = this;
+/*	self.loadJSON();
+	self.decoupling('description');
+	self.decoupling('messagebuzz');
+	self.decoupling('caption');
+	self.preprocess();
+	self.startWebConsole(basePath);*/
+	this.loadCSV(function(){
+		self.decoupling('message');
+		self.loadJSON();
+		self.decoupling('description');
+		self.decoupling('messagebuzz');
+		self.decoupling('caption');
+		//self.decoupling('link_url', 1);
+		self.removeEmpty();
+		self.preprocess();
+		self.startWebConsole(basePath);
+	});
 }
 
 NewsEvents.prototype.loadAndStartServer  = function(basePath){ 
 	this.loadJSON();
 	this.loadData();
 	this.startWebConsole(basePath);
-	console.log(this.association.getFrequentItemsets()[1])
+	//console.log(this.association.getFrequentItemsets()[1])
 }
 
 NewsEvents.prototype.loadData  = function(){ 
@@ -196,8 +252,10 @@ console.log('term learned');*/
 		.loadDict(__dirname + '/dicts/tw2.txt');
 
 
+	self.learnedTerms = fs.readFileSync('./dicts/learnedTerms.txt').toString().split(/[\n\r]+/);
+	console.log(' - load learnedTerms')
 
-	_.each(self.stream, function(message){
+	/*_.each(self.stream, function(message){
 		//self.association.addCollection(emoTerms);
 		var text = message.description + ' ' + message.messagebuzz  + ' ' + message.link;
 		text = text.replace(/[　\s\n\t（）［］「」]/g, ' ')
@@ -223,10 +281,11 @@ console.log('term learned');*/
 	});
 
 	self.learnedTerms = fpTree.prediction(0.3);
+	fpTree = null;
 
 	console.log(self.learnedTerms);
 
-	console.log('phase1 complete');
+	console.log('phase1 complete');*/
 
 	_.each(self.stream, function(message, hash){
 		var text = message.description + message.messagebuzz + message.link;	
@@ -270,28 +329,43 @@ console.log('term learned');*/
 		if(message.ntusd < -5) message.emotion = 'http://statics.plurk.com/a5ae31c4185bc60cd006650dc10f8147.gif'
 
 
-
 		self.tfidf.addDocument(terms, message.hash)
-		self.association.addCollection(terms);
+		//self.association.addCollection(terms);
+
+		self.fp.addCollection(terms)
 
 		message.terms = terms;
 
 	});
 
+	self.fp.build();
+
 
 	segmenter.destroy();
 	segmenter = null;
+
+
 
 	console.log('phase2 complete');
 
 	self.association.frequentItemsets();
 
-	self.hotTerms = _.map(self.association.getFrequentItemsets()[1], function(l1){
+	//return;
+
+	self.hotTerms = _.map(self.fp.table, function(item){
+		//console.log(item)
+		return {
+			term: item.index, 
+			support: item.freq
+		}
+	});
+
+/*	self.hotTerms = _.map(self.association.getFrequentItemsets()[1], function(l1){
 		return {
 			term: l1.list[0], 
 			support: l1.support
 		}
-	});
+	});*/
 
 	self.saveData();
 
@@ -418,7 +492,7 @@ NewsEvents.prototype.startWebConsole = function(basePath){
 
 		var keywords = _.pluck(termsCount, 'term');
 
-		relatedRules = self.association.strong(search); 
+/*		relatedRules = self.association.strong(search); 
 		relatedRules = _.union(relatedRules, _.flatten(_.map(_.pluck(termsCount, 'term'), function(term){ console.log('>>', term);return self.association.strong(term); }), true))
 		relatedRules = _.reject(relatedRules, function(e){ return e.confidence < 0.18; });
 		relatedRules = _.sortBy(relatedRules, function(e){ return e.confidence; }).reverse();
@@ -428,11 +502,10 @@ NewsEvents.prototype.startWebConsole = function(basePath){
 		var relatedTerms = _.uniq(_.flatten(_.pluck(relatedRules, 'base'), true));
 		//relatedTerms = relatedTerms.concat();
 		relatedTerms = _.uniq(relatedTerms);
-		relatedTerms = _.without(relatedTerms, search);
+		relatedTerms = _.without(relatedTerms, search);*/
 
-
-
-		console.log(relatedTerms)
+		var relatedTerms = self.fp.relatedItems(search).slice(0, 10);
+		console.log('relatedTerms', relatedTerms)
 
 		var related = self.searchMessages(relatedTerms, 4);
 		related = _.reject(related, function(e){ return (result_hash.indexOf(e.hash) != -1); });
@@ -440,7 +513,7 @@ NewsEvents.prototype.startWebConsole = function(basePath){
 
 		response.render('find', {
 			search: search,
-			messages: result,
+			messages: result.slice(0,300),
 			related : related, 
 			keywords: keywords,
 			relatedTerms: relatedTerms,

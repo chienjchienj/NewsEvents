@@ -47,17 +47,30 @@ html {
         right: -30%; } }
   html .message {
     margin: 10px auto;
-    font-size: 12px; }
+    font-size: 12px;
+    display: inline-block;
+    padding: 10px;
+    width: 100%;
+    overflow: hidden;
+    background: rgba(240, 240, 255, 0.8);
+    border-radius: 8px;
+    /* a{
+    		
+    } */ }
     html .message h4 {
       font-size: 16px;
       font-weight: bold; }
     html .message a {
-      display: inline-block;
-      padding: 10px;
-      width: 100%;
-      overflow: hidden;
-      background: rgba(240, 240, 255, 0.8);
-      border-radius: 8px; }
+      color: #222;
+      text-decoration: underline; }
+    html .message:hover {
+      color: #555;
+      background: rgba(240, 255, 240, 0.8);
+      text-decoration: none; }
+    html .message .caption {
+      border-left: 2px solid #777;
+      margin-left: 20px;
+      padding: 5px; }
     html .message img.social {
       float: right;
       width: 100px;
@@ -68,10 +81,6 @@ html {
     html .message img.img-thumbnail {
       max-height: 150px;
       margin: 10px auto; }
-    html .message:hover a {
-      color: #555;
-      background: rgba(240, 255, 240, 0.8);
-      text-decoration: none; }
     html .message .highlight {
       background-color: rgba(198, 236, 86, 0.4); }
     html .message .highlight.related {
