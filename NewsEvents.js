@@ -276,9 +276,11 @@ console.log('term learned');*/
 
 		message.terms = terms;
 
-		//self.stream[message.hash]
-
 	});
+
+
+	segmenter.destroy();
+	segmenter = null;
 
 	console.log('phase2 complete');
 
