@@ -505,7 +505,18 @@ NewsEvents.prototype.startWebConsole = function(basePath){
 		relatedTerms = _.without(relatedTerms, search);*/
 
 		var relatedTerms = self.fp.relatedItems(search).slice(0, 10);
-		console.log('relatedTerms', relatedTerms)
+
+		var moreRelated = _.sortBy(_.flatten(_.map(keywords, function(kw){
+			return self.fp.related(kw);
+		}), true), function(s){ return s.support }).reverse();
+
+		var moreRelatedTerms = _.uniq(_.flatten(_.pluck(moreRelated, 'base')))
+
+		//console.log('more>>', moreRelatedTerms);
+
+		relatedTerms = relatedTerms.concat(moreRelatedTerms.slice(0, 5));
+
+		//console.log('relatedTerms', relatedTerms.concat(moreRelatedTerms))
 
 		var related = self.searchMessages(relatedTerms, 4);
 		related = _.reject(related, function(e){ return (result_hash.indexOf(e.hash) != -1); });

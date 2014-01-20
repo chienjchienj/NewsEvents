@@ -16,7 +16,8 @@
     "open": "~0.0.4",
     "redis": "~0.9.0",
     "underscore": "~1.5.2",
-    "MD5": "*"
+    "MD5": "*",
+    "csv": "*"
   },
   "devDependencies": {},
   "scripts": {
