@@ -31,7 +31,7 @@ block maincontent
 						//a(href=messages[i].link_url || '#', target="_blank")
 						- if(messages[i].link_url)
 							h4 
-								a(href=messages[i].link_url) #{messages[i].link}
+								a(href=messages[i].link_url, target="_blank") #{messages[i].link}
 
 						
 						img.social(src="/images/social/"+messages[i].source+".png")
