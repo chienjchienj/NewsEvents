@@ -192,8 +192,8 @@ console.log('term learned');*/
 		.loadDict('wildcard.txt', 'WILDCARD', true)   // 通配符
 		// .loadDict('dict.txt')
 		// .loadDict('dict2.txt')
-		.loadDict('dict_tw.txt')
-		.loadDict('tw2.txt');
+		.loadDict(__dirname + '/dicts/dict_tw.txt')
+		.loadDict(__dirname + '/dicts/tw2.txt');
 
 
 
