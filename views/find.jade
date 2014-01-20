@@ -1,0 +1,56 @@
+extends layout
+
+block maincontent
+	.text-center(style='font-size:12px; color: #ccc;') #{messages.length} 則訊息 / 搜尋耗時 #{time} 毫秒
+
+	- if (typeof(relatedTerms) !== 'undefined' && relatedTerms.length > 0)		
+		div#relatedTerms 
+			h2 Related Terms
+			-for(var i in relatedTerms)
+					a(href='/find/' + relatedTerms[i])
+						span.hotTerm
+							span(style="font-size:16px;") #{relatedTerms[i]}
+		hr
+	- if (typeof(keywords) !== 'undefined' && keywords.length > 0)		
+		div#keywords
+			h2 Keywords
+			-for(var i in keywords)
+					a(href='/find/' + keywords[i])
+						span.hotTerm
+							span(style="font-size:16px;") #{keywords[i]}
+		hr		
+
+	h1#searchTerm #{search}
+
+	- if (typeof(messages) !== 'undefined')
+		.row
+			-for(var i in messages)
+					div.message.col-md-6
+						//a(href='/related/'+messages[i].hash, _target="_blank")
+						a(href=messages[i].link_url || '#', target="_blank")
+							img.emotion(src=messages[i].emotion, title=messages[i].ntusd)
+							img.social(src="/images/social/"+messages[i].source+".png")
+							h4 #{messages[i].caption}
+							div #{messages[i].description}
+							div #{messages[i].messagebuzz}
+							- if (messages[i].image)
+								img.img-thumbnail(src=messages[i].image, onerror='this.parentNode.removeChild(this)')
+							div #{messages[i].time}
+							//- a(href='/related/'+emoticons[i].hash, _target="_blank")
+							//- 	img(src=emoticons[i].url)
+
+
+
+	- if (typeof(emoticon) !== 'undefined')
+		.row.text-center
+			img(src=emoticon.url)
+
+	//- - if (typeof(related) !== 'undefined' && related.length > 0)		
+	//- 	hr
+	//- 	h1 Related
+	//- 	.row
+	//- 		-for(var i in related)
+	//- 				div.emoticon.col-xs-2.col-sm-1.text-center
+	//- 					a(href='/related/'+related[i].hash, _target="_blank")
+							img(src=related[i].url)
+
